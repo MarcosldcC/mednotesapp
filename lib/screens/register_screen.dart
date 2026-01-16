@@ -6,6 +6,8 @@ import '../constants/text_styles.dart';
 import '../widgets/custom_clipper.dart';
 import '../screens/verify_account_screen.dart';
 import '../screens/login_screen.dart';
+import '../services/auth_service.dart';
+import '../services/api_exception.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -24,6 +26,8 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
   
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
+  final AuthService _auth = AuthService();
   
   late AnimationController _animationController;
   double _dragOffset = 0.0;
@@ -253,16 +257,46 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                         SizedBox(
                           height: 48,
                           child: ElevatedButton(
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const VerifyAccountScreen(),
-                                  ),
-                                );
-                              }
-                            },
+                            onPressed: _isLoading
+                                ? null
+                                : () async {
+                                    if (!_formKey.currentState!.validate()) return;
+                                    setState(() => _isLoading = true);
+                                    try {
+                                      final res = await _auth.signup(
+                                        nome: _firstNameController.text.trim(),
+                                        sobrenome: _lastNameController.text.trim(),
+                                        email: _emailController.text.trim(),
+                                        senha: _passwordController.text,
+                                      );
+                                      if (!mounted) return;
+                                      if (res.message.trim().isNotEmpty) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(res.message)),
+                                        );
+                                      }
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => VerifyAccountScreen(
+                                            email: _emailController.text.trim(),
+                                          ),
+                                        ),
+                                      );
+                                    } on ApiException catch (e) {
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text(e.message)),
+                                      );
+                                    } catch (_) {
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Erro inesperado ao criar conta.')),
+                                      );
+                                    } finally {
+                                      if (mounted) setState(() => _isLoading = false);
+                                    }
+                                  },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.darkGreenHeader,
                               shape: RoundedRectangleBorder(
@@ -270,10 +304,19 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                               ),
                               elevation: 0,
                             ),
-                            child: Text(
-                              'Criar Conta',
-                              style: AppTextStyles.button,
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    'Criar Conta',
+                                    style: AppTextStyles.button,
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 12),

@@ -4,9 +4,13 @@ import '../constants/colors.dart';
 import '../constants/text_styles.dart';
 import '../widgets/custom_clipper.dart';
 import '../screens/choose_plan_screen.dart';
+import '../services/auth_service.dart';
+import '../services/api_exception.dart';
 
 class VerifyAccountScreen extends StatefulWidget {
-  const VerifyAccountScreen({super.key});
+  const VerifyAccountScreen({super.key, required this.email});
+
+  final String email;
 
   @override
   State<VerifyAccountScreen> createState() => _VerifyAccountScreenState();
@@ -14,13 +18,16 @@ class VerifyAccountScreen extends StatefulWidget {
 
 class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
   final List<TextEditingController> _controllers = List.generate(
-    5,
+    6,
     (index) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(
-    5,
+    6,
     (index) => FocusNode(),
   );
+  bool _isLoading = false;
+  bool _isResending = false;
+  final AuthService _auth = AuthService();
 
   @override
   void dispose() {
@@ -34,7 +41,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
   }
 
   void _onCodeChanged(int index, String value) {
-    if (value.isNotEmpty && index < 4) {
+    if (value.isNotEmpty && index < _controllers.length - 1) {
       _focusNodes[index + 1].requestFocus();
     }
     if (value.isEmpty && index > 0) {
@@ -135,14 +142,23 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.email,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.darkGreenHeader,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 32),
                     
-                    // Campos de código (5 dígitos)
+                    // Campos de código (6 dígitos)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(5, (index) {
+                      children: List.generate(_controllers.length, (index) {
                         return SizedBox(
-                          width: 56,
+                          width: 48,
                           height: 56,
                           child: TextField(
                             controller: _controllers[index],
@@ -202,11 +218,32 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                             const TextSpan(text: 'Não chegou? '),
                             WidgetSpan(
                               child: GestureDetector(
-                                onTap: () {
-                                  // Implementar lógica de reenvio
-                                },
+                                onTap: _isResending
+                                    ? null
+                                    : () async {
+                                        setState(() => _isResending = true);
+                                        try {
+                                          final msg = await _auth.resendCode(email: widget.email);
+                                          if (!mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text(msg)),
+                                          );
+                                        } on ApiException catch (e) {
+                                          if (!mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text(e.message)),
+                                          );
+                                        } catch (_) {
+                                          if (!mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Erro ao reenviar o código.')),
+                                          );
+                                        } finally {
+                                          if (mounted) setState(() => _isResending = false);
+                                        }
+                                      },
                                 child: Text(
-                                  'Clique para reenviar o código',
+                                  _isResending ? 'Reenviando...' : 'Clique para reenviar o código',
                                   style: AppTextStyles.link.copyWith(
                                     decoration: TextDecoration.underline,
                                   ),
@@ -223,18 +260,43 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                     SizedBox(
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: () {
-                          final code = _controllers.map((c) => c.text).join();
-                          if (code.length == 5) {
-                            // Após verificação, navegar para tela de planos
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ChoosePlanScreen(),
-                              ),
-                            );
-                          }
-                        },
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                final code = _controllers.map((c) => c.text).join();
+                                if (code.length != _controllers.length) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Digite o código completo.')),
+                                  );
+                                  return;
+                                }
+                                setState(() => _isLoading = true);
+                                try {
+                                  await _auth.verify(
+                                    email: widget.email,
+                                    codigo: code,
+                                  );
+                                  if (!mounted) return;
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const ChoosePlanScreen(),
+                                    ),
+                                  );
+                                } on ApiException catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(e.message)),
+                                  );
+                                } catch (_) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Erro inesperado ao verificar.')),
+                                  );
+                                } finally {
+                                  if (mounted) setState(() => _isLoading = false);
+                                }
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.darkGreenHeader,
                           shape: RoundedRectangleBorder(
@@ -242,10 +304,19 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                           ),
                           elevation: 0,
                         ),
-                        child: Text(
-                          'Verificar',
-                          style: AppTextStyles.button,
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                'Verificar',
+                                style: AppTextStyles.button,
+                              ),
                       ),
                     ),
                     const SizedBox(height: 32),

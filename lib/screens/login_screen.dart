@@ -6,6 +6,8 @@ import '../constants/text_styles.dart';
 import '../widgets/custom_clipper.dart';
 import 'register_screen.dart';
 import 'choose_plan_screen.dart';
+import '../services/auth_service.dart';
+import '../services/api_exception.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +21,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
+  final AuthService _auth = AuthService();
 
   @override
   void dispose() {
@@ -245,17 +249,37 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(
                           height: 48,
                           child: ElevatedButton(
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                // Como não há servidor, todo login vai para tela de planos
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const ChoosePlanScreen(),
-                                  ),
-                                );
-                              }
-                            },
+                            onPressed: _isLoading
+                                ? null
+                                : () async {
+                                    if (!_formKey.currentState!.validate()) return;
+                                    setState(() => _isLoading = true);
+                                    try {
+                                      await _auth.login(
+                                        email: _emailController.text.trim(),
+                                        senha: _passwordController.text,
+                                      );
+                                      if (!mounted) return;
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const ChoosePlanScreen(),
+                                        ),
+                                      );
+                                    } on ApiException catch (e) {
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text(e.message)),
+                                      );
+                                    } catch (_) {
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Erro inesperado ao fazer login.')),
+                                      );
+                                    } finally {
+                                      if (mounted) setState(() => _isLoading = false);
+                                    }
+                                  },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.darkGreenHeader,
                               shape: RoundedRectangleBorder(
@@ -263,10 +287,19 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               elevation: 0,
                             ),
-                            child: Text(
-                              'Entrar',
-                              style: AppTextStyles.button,
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    'Entrar',
+                                    style: AppTextStyles.button,
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 12),
