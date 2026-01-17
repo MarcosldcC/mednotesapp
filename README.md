@@ -38,6 +38,41 @@ flutter pub get
 flutter run
 ```
 
+## 🤖 RAG (Python) conectado ao Chat
+
+O chat do app Flutter (`ChatConversationScreen`) chama um servidor local do RAG via HTTP.
+
+### Subir o servidor do RAG (FastAPI)
+
+No Windows (PowerShell), dentro da pasta do projeto:
+
+```bash
+cd RAG
+python -m pip install -r requirements_api.txt
+python -m uvicorn api_server:app --host 127.0.0.1 --port 8000 --reload
+```
+
+Teste rápido:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+### Variáveis necessárias
+
+O RAG usa o `.env` na **raiz do repositório** (ou variáveis do sistema):
+
+- `OPENAI_API_KEY`
+- `VECTOR_STORE_ID`
+
+### Flutter apontando para o servidor
+
+Por padrão o app usa `http://127.0.0.1:8000`. Você pode trocar com:
+
+```bash
+flutter run -d chrome --dart-define=RAG_BASE_URL=http://127.0.0.1:8000
+```
+
 ### Executar em dispositivos específicos
 
 - **Android:**

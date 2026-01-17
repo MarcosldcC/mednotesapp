@@ -4,6 +4,8 @@ import '../constants/colors.dart';
 import '../constants/text_styles.dart';
 import '../screens/profile_menu_screen.dart';
 import '../screens/dashboard_screen.dart';
+import '../services/rag_service.dart';
+import '../services/api_exception.dart';
 
 class ChatConversationScreen extends StatefulWidget {
   const ChatConversationScreen({super.key});
@@ -17,6 +19,8 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
+  bool _isSending = false;
+  final RagService _rag = RagService();
 
   @override
   void dispose() {
@@ -253,22 +257,50 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
               border: Border.all(color: Colors.white, width: 1),
             ),
             child: IconButton(
-              icon: const Icon(Icons.send, color: AppColors.darkGreenHeader),
-              onPressed: () {
-                if (_messageController.text.isNotEmpty) {
-                  setState(() {
-                    _messages.add(ChatMessage(
-                      text: _messageController.text,
-                      isUser: true,
-                    ));
-                    _messageController.clear();
-                  });
-                  // Scroll para a última mensagem após adicionar
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _scrollToBottom();
-                  });
-                }
-              },
+              icon: _isSending
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.darkGreenHeader,
+                      ),
+                    )
+                  : const Icon(Icons.send, color: AppColors.darkGreenHeader),
+              onPressed: _isSending
+                  ? null
+                  : () async {
+                      final text = _messageController.text.trim();
+                      if (text.isEmpty) return;
+
+                      setState(() {
+                        _isSending = true;
+                        _messages.add(ChatMessage(text: text, isUser: true));
+                        _messageController.clear();
+                      });
+                      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+
+                      try {
+                        final answer = await _rag.ask(text);
+                        if (!mounted) return;
+                        setState(() {
+                          _messages.add(ChatMessage(text: answer, isUser: false));
+                        });
+                        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                      } on ApiException catch (e) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.message)),
+                        );
+                      } catch (_) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Erro ao consultar o RAG.')),
+                        );
+                      } finally {
+                        if (mounted) setState(() => _isSending = false);
+                      }
+                    },
             ),
           ),
         ],
