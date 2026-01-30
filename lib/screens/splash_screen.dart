@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/colors.dart';
+import '../design/responsive.dart';
 import '../screens/welcome_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -29,10 +30,12 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+      SystemUiOverlayStyle(
+        statusBarColor: AppColors.darkGreenHeader,
+        statusBarIconBrightness: Brightness.light, // Ícones brancos para fundo verde
       ),
     );
 
@@ -41,13 +44,13 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Center(
         child: Image.asset(
           'assets/images/logomednotes.png',
-          width: 60,
-          height: 60,
+          width: r.isz(60, min: 50, max: 80),
+          height: r.isz(60, min: 50, max: 80),
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
-            return const Icon(
+            return Icon(
               Icons.image_not_supported,
-              size: 120,
+              size: r.isz(120, min: 100, max: 150),
               color: Colors.white,
             );
           },

@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
 import '../widgets/custom_clipper.dart';
-import '../screens/interest_areas_screen.dart';
+import '../design/responsive.dart';
+import '../screens/location_selection_screen.dart';
 
 class ProfileSelectionScreen extends StatefulWidget {
   const ProfileSelectionScreen({super.key});
@@ -22,10 +23,12 @@ class _ProfileSelectionScreenState extends State<ProfileSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+      SystemUiOverlayStyle(
+        statusBarColor: AppColors.darkGreenHeader,
+        statusBarIconBrightness: Brightness.light, // Ícones brancos para fundo verde
       ),
     );
 
@@ -56,95 +59,144 @@ class _ProfileSelectionScreenState extends State<ProfileSelectionScreen> {
             right: 0,
             child: Container(
               width: double.infinity,
-              height: _calculateCardHeight(context),
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height * 0.50,
+                maxHeight: MediaQuery.of(context).size.height * 0.90,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.creamCard,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(45),
-                  topRight: Radius.circular(45),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(r.r(45, min: 35, max: 50)),
+                  topRight: Radius.circular(r.r(45, min: 35, max: 50)),
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, -2),
+                    blurRadius: r.s(8),
+                    offset: Offset(0, -r.s(2)),
                   ),
                 ],
               ),
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: r.pad(vertical: r.spacingLG),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 16),
-                    // Linha separadora
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppColors.darkGreenHeader,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    // Título
-                    Text(
-                      'Qual é o seu perfil?',
-                      style: AppTextStyles.heading2.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    // Subtítulo
-                    Text(
-                      'Selecione a opção que melhor descreve você',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.grayText,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-                    
-                    // Opções de perfil
-                    _buildProfileOption('Estudante de Medicina', 'student'),
-                    const SizedBox(height: 16),
-                    _buildProfileOption('Residente', 'resident'),
-                    const SizedBox(height: 16),
-                    _buildProfileOption('Médico', 'doctor'),
-                    const SizedBox(height: 32),
-                    
-                    // Botão Próximo
-                    SizedBox(
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _selectedProfile != null
-                            ? () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const InterestAreasScreen(),
-                                  ),
-                                );
-                              }
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.darkGreenHeader,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                  mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Indicador de progresso fixo (4 linhas - primeira etapa)
+                  Padding(
+                    padding: r.pad(top: 16, bottom: 24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: r.s(24, min: 20, max: 28),
+                          height: r.s(4, min: 3, max: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.darkGreenHeader,
+                            borderRadius: BorderRadius.circular(r.r(2)),
                           ),
-                          elevation: 0,
                         ),
-                        child: Text(
-                          'Próximo',
-                          style: AppTextStyles.button,
+                        SizedBox(width: r.spacingXS),
+                        Container(
+                          width: r.s(24, min: 20, max: 28),
+                          height: r.s(4, min: 3, max: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.grayLight,
+                            borderRadius: BorderRadius.circular(r.r(2)),
+                          ),
                         ),
-                      ),
+                        SizedBox(width: r.spacingXS),
+                        Container(
+                          width: r.s(24, min: 20, max: 28),
+                          height: r.s(4, min: 3, max: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.grayLight,
+                            borderRadius: BorderRadius.circular(r.r(2)),
+                          ),
+                        ),
+                        SizedBox(width: r.spacingXS),
+                        Container(
+                          width: r.s(24, min: 20, max: 28),
+                          height: r.s(4, min: 3, max: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.grayLight,
+                            borderRadius: BorderRadius.circular(r.r(2)),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 32),
-                  ],
+                  ),
+                  // Conteúdo rolável
+                  Padding(
+                    padding: r.pad(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(height: r.spacingSM),
+                        // Título
+                        Text(
+                          'Qual é você hoje?',
+                          style: r.heading2.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: r.spacingLG),
+                        // Subtítulo
+                        Text(
+                          'Selecione a opção que melhor descreve você',
+                          style: r.bodyMedium.copyWith(
+                            color: AppColors.grayText,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: r.spacingXXXXL),
+                        
+                        // Opções de perfil
+                        _buildProfileOption('Estudante de Medicina', 'student'),
+                        SizedBox(height: r.spacingLG),
+                        _buildProfileOption('Interno (5° - 6° Ano)', 'intern'),
+                        SizedBox(height: r.spacingLG),
+                        _buildProfileOption('Residente (R1 - R2)', 'resident'),
+                        SizedBox(height: r.spacingLG),
+                        _buildProfileOption('Médico Generalista / APS', 'doctor'),
+                        SizedBox(height: r.spacingXXXXL),
+                        
+                        // Botão Próximo
+                        SizedBox(
+                          height: r.h(56, min: 48, max: 64),
+                          child: ElevatedButton(
+                            onPressed: _selectedProfile != null
+                                ? () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const LocationSelectionScreen(),
+                                      ),
+                                    );
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.darkGreenHeader,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(r.radiusLG),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              'Próximo',
+                              style: r.bodyMedium.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: r.spacingXXXXL),
+                      ],
+                    ),
+                  ),
+                ],
                 ),
               ),
             ),
@@ -155,31 +207,64 @@ class _ProfileSelectionScreenState extends State<ProfileSelectionScreen> {
   }
 
   Widget _buildProfileOption(String label, String value) {
+    final r = Responsive.of(context);
     final isSelected = _selectedProfile == value;
+    
     return GestureDetector(
       onTap: () {
         setState(() {
           _selectedProfile = value;
         });
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: r.pad(horizontal: 20, vertical: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? AppColors.darkGreenHeader : Colors.white,
+          borderRadius: BorderRadius.circular(r.radiusLG),
           border: Border.all(
             color: isSelected
                 ? AppColors.darkGreenHeader
-                : AppColors.mediumGreen,
-            width: isSelected ? 2 : 1,
+                : AppColors.mediumGreen.withOpacity(0.3),
+            width: isSelected ? r.s(2) : r.s(1),
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.darkGreenHeader.withOpacity(0.3),
+                    blurRadius: r.s(8),
+                    offset: Offset(0, r.s(4)),
+                  ),
+                ]
+              : [],
         ),
-        child: Text(
-          label,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.darkGreenHeader,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: r.bodyLarge.copyWith(
+                  color: isSelected ? Colors.white : AppColors.darkGreenHeader,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Container(
+                width: r.isz(24, min: 20, max: 28),
+                height: r.isz(24, min: 20, max: 28),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check,
+                  size: r.isz(16, min: 14, max: 20),
+                  color: AppColors.darkGreenHeader,
+                ),
+              ),
+          ],
         ),
       ),
     );

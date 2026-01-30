@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
+import '../design/responsive.dart';
 import '../widgets/custom_clipper.dart';
 import '../screens/choose_plan_screen.dart';
 
@@ -51,10 +52,12 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+      SystemUiOverlayStyle(
+        statusBarColor: AppColors.darkGreenHeader,
+        statusBarIconBrightness: Brightness.light, // Ícones brancos para fundo verde
       ),
     );
 
@@ -85,65 +88,69 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
             right: 0,
             child: Container(
               width: double.infinity,
-              height: _calculateCardHeight(context),
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height * 0.45,
+                maxHeight: MediaQuery.of(context).size.height * 0.90,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.creamCard,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(45),
-                  topRight: Radius.circular(45),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(r.radiusXXL),
+                  topRight: Radius.circular(r.radiusXXL),
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, -2),
+                    blurRadius: r.s(8, min: 6, max: 10),
+                    offset: Offset(0, -r.s(2, min: 1, max: 3)),
                   ),
                 ],
               ),
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: r.pad(horizontal: 24, vertical: r.spacingLG),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.spacingMD),
                     // Linha separadora
                     Center(
                       child: Container(
-                        width: 40,
-                        height: 4,
+                        width: r.isz(40, min: 35, max: 45),
+                        height: r.s(4, min: 3, max: 5),
                         decoration: BoxDecoration(
                           color: AppColors.darkGreenHeader,
-                          borderRadius: BorderRadius.circular(2),
+                          borderRadius: BorderRadius.circular(r.r(2)),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXL),
                     // Título
                     Text(
                       'Verificar Conta',
-                      style: AppTextStyles.heading2.copyWith(
+                      style: r.heading2.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.spacingMD),
                     // Texto explicativo
                     Text(
                       'Verifique sua caixa de e-mail e insira abaixo o código de confirmação que chegou.',
-                      style: AppTextStyles.bodyMedium.copyWith(
+                      style: r.bodyMedium.copyWith(
                         color: AppColors.grayText,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXL),
                     
                     // Campos de código (5 dígitos)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: List.generate(5, (index) {
                         return SizedBox(
-                          width: 56,
-                          height: 56,
+                          width: r.isz(56, min: 50, max: 62),
+                          height: r.h(56, min: 50, max: 62),
                           child: TextField(
                             controller: _controllers[index],
                             focusNode: _focusNodes[index],
@@ -153,32 +160,31 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
                             ],
-                            style: const TextStyle(
-                              fontSize: 24,
+                            style: r.heading2.copyWith(
                               fontWeight: FontWeight.bold,
                               color: AppColors.darkGreenHeader,
                             ),
                             decoration: InputDecoration(
                               counterText: '',
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
+                                borderRadius: BorderRadius.circular(r.radiusMD),
+                                borderSide: BorderSide(
                                   color: AppColors.mediumGreen,
-                                  width: 1,
+                                  width: r.s(1),
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
+                                borderRadius: BorderRadius.circular(r.radiusMD),
+                                borderSide: BorderSide(
                                   color: AppColors.mediumGreen,
-                                  width: 1,
+                                  width: r.s(1),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
+                                borderRadius: BorderRadius.circular(r.radiusMD),
+                                borderSide: BorderSide(
                                   color: AppColors.darkGreenHeader,
-                                  width: 2,
+                                  width: r.s(2, min: 1.5, max: 2.5),
                                 ),
                               ),
                               filled: true,
@@ -189,13 +195,13 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                         );
                       }),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.spacingLG),
                     
                     // Link de reenvio
                     Center(
                       child: RichText(
                         text: TextSpan(
-                          style: AppTextStyles.bodyMedium.copyWith(
+                          style: r.bodyMedium.copyWith(
                             color: AppColors.grayText,
                           ),
                           children: [
@@ -207,7 +213,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                                 },
                                 child: Text(
                                   'Clique para reenviar o código',
-                                  style: AppTextStyles.link.copyWith(
+                                  style: r.link.copyWith(
                                     decoration: TextDecoration.underline,
                                   ),
                                 ),
@@ -217,11 +223,11 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXL),
                     
                     // Botão Verificar
                     SizedBox(
-                      height: 56,
+                      height: r.h(56, min: 50, max: 64),
                       child: ElevatedButton(
                         onPressed: () {
                           final code = _controllers.map((c) => c.text).join();
@@ -238,17 +244,17 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.darkGreenHeader,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(r.radiusMD),
                           ),
                           elevation: 0,
                         ),
                         child: Text(
                           'Verificar',
-                          style: AppTextStyles.button,
+                          style: r.button,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXL),
                   ],
                 ),
               ),

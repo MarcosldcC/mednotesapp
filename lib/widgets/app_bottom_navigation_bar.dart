@@ -7,6 +7,7 @@ import '../screens/dashboard_screen.dart';
 import '../screens/on_call_mode_screen.dart';
 import '../screens/real_time_health_screen.dart';
 import '../screens/marketplace_screen.dart';
+import '../screens/clinical_algorithms_screen.dart';
 import '../design/responsive.dart';
 
 /// Componente reutilizável para o bottom navigation bar
@@ -191,6 +192,14 @@ class AppBottomNavigationBar extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) => const OnCallModeScreen(),
+            ),
+          );
+        } else if (index == 0) {
+          // Vector.svg - Algoritmos Clínicos / Casos Clínicos
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ClinicalAlgorithmsScreen(),
             ),
           );
         }

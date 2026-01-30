@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
+import '../design/responsive.dart';
 import '../screens/profile_menu_screen.dart';
 import '../screens/chat_conversation_screen.dart';
 import '../screens/dashboard_screen.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_bottom_navigation_bar.dart';
+import '../services/settings_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -14,377 +20,329 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final PageController _pageController = PageController();
   int _currentPage = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  double _dragStartX = 0.0;
+  bool _isDragging = false;
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    final settings = Provider.of<SettingsService>(context);
+    final primaryColor = settings.highContrast ? Colors.black : AppColors.darkGreenHeader;
+    
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+      SystemUiOverlayStyle(
+        statusBarColor: primaryColor,
+        statusBarIconBrightness: Brightness.light, // Ícones brancos para fundo verde
       ),
     );
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: AppColors.darkGreenHeader,
+      backgroundColor: primaryColor,
       drawer: const ProfileMenuScreen(),
       drawerEnableOpenDragGesture: true,
       body: SafeArea(
         child: Column(
           children: [
             // Header
-            _buildHeader(),
+            const AppHeader(isWhite: true, showNotifications: true),
             
-            // Conteúdo com PageView
+            // Conteúdo com troca por gesto (sem rolagem visual)
             Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
+              child: GestureDetector(
+                onHorizontalDragStart: (details) {
+                  _isDragging = true;
+                  _dragStartX = details.globalPosition.dx;
                 },
-                children: [
-                  _buildWelcomePage(),
-                  _buildWhoAmIPage(),
-                  _buildWhatCanIAskPage(),
-                ],
-              ),
-            ),
-            
-            // Indicador de progresso
-            _buildProgressIndicator(),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: Row(
-        children: [
-          Builder(
-            builder: (context) => GestureDetector(
-              onTap: () {
-                Scaffold.of(context).openDrawer();
-              },
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.darkGreenHeader,
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/images/medica.png',
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              'mednotes',
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: AppColors.darkGreenHeader,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: AppColors.darkGreenHeader),
-            onPressed: () {},
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWelcomePage() {
-    return Container(
-      color: AppColors.darkGreenHeader,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.psychology_outlined,
-            size: 80,
-            color: Colors.white,
-          ),
-          const SizedBox(height: 32),
-          Text(
-            'Seja Bem-vindo\nao Dr.Axon',
-            style: AppTextStyles.heading1.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Text(
-              'Comece a conversar comigo agora mesmo! Você pode me perguntar qualquer coisa.',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: Colors.white70,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 48),
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 24.0),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white, width: 2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              'Deslize para o lado',
-              style: AppTextStyles.button.copyWith(
-                color: Colors.white,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWhoAmIPage() {
-    return Container(
-      color: AppColors.darkGreenHeader,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.psychology_outlined,
-            size: 80,
-            color: Colors.white,
-          ),
-          const SizedBox(height: 32),
-          Text(
-            'Quem Sou Eu?',
-            style: AppTextStyles.heading1.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Text(
-              'Eu sou um Assistente de Inteligência\nArtificial (O Dr.Axon) treinado com\nMedicina Baseada em Evidências.',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: Colors.white,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 48),
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 24.0),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white, width: 2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              'Deslize para o lado',
-              style: AppTextStyles.button.copyWith(
-                color: Colors.white,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWhatCanIAskPage() {
-    return Container(
-      color: AppColors.darkGreenHeader,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.psychology_outlined,
-            size: 80,
-            color: Colors.white,
-          ),
-          const SizedBox(height: 32),
-          Text(
-            'O que posso perguntar a você?',
-            style: AppTextStyles.heading1.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Text(
-              'Você pode tirar diversos tipos de dúvidas sobre casos clínicos, fluxogramas clínicos e até mesmo sobre funções do App Mednotes!',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: Colors.white,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 48),
-          GestureDetector(
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const ChatConversationScreen(),
-                  transitionDuration: const Duration(milliseconds: 300),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                onHorizontalDragUpdate: (details) {
+                  // Detecta movimento mínimo para trocar página
+                  final delta = details.globalPosition.dx - _dragStartX;
+                  if (delta.abs() > 50 && _isDragging) {
+                    _isDragging = false;
+                    final direction = delta > 0 ? -1 : 1;
+                    final targetPage = (_currentPage + direction).clamp(0, 2);
+                    if (targetPage != _currentPage) {
+                      setState(() {
+                        _currentPage = targetPage;
+                      });
+                    }
+                  }
+                },
+                onHorizontalDragEnd: (details) {
+                  _isDragging = false;
+                },
+                child: AnimatedSwitcher(
+                  duration: settings.ecoModeEnabled
+                      ? Duration.zero
+                      : const Duration(milliseconds: 300),
+                  transitionBuilder: (child, animation) {
                     return FadeTransition(
                       opacity: animation,
                       child: child,
                     );
                   },
+                  child: _getCurrentPage(),
                 ),
-              );
-            },
-            child: Container(
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 24.0),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: AppColors.creamCard,
-                borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
-                'Vamos Começar',
-                style: AppTextStyles.button.copyWith(
-                  color: AppColors.darkGreenHeader,
+            ),
+            
+            // Indicador de progresso
+            _buildProgressIndicator(),
+            SizedBox(height: r.spacingLG),
+          ],
+        ),
+      ),
+      bottomNavigationBar: const AppBottomNavigationBar(isWhite: true),
+    );
+  }
+
+
+  Widget _getCurrentPage() {
+    switch (_currentPage) {
+      case 0:
+        return _buildWelcomePage();
+      case 1:
+        return _buildWhoAmIPage();
+      case 2:
+        return _buildWhatCanIAskPage();
+      default:
+        return _buildWelcomePage();
+    }
+  }
+
+  Widget _buildWelcomePage() {
+    return Builder(
+      builder: (context) {
+        final r = Responsive.of(context);
+        return Container(
+          key: const ValueKey('welcome'),
+          color: _primaryColor(context),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/logomednotes.png',
+                width: r.isz(80, min: 70, max: 100),
+                height: r.isz(80, min: 70, max: 100),
+                fit: BoxFit.contain,
+              ),
+              SizedBox(height: r.spacingXXXXL),
+              Text(
+                'Seja Bem-vindo\nao Dr.Axon',
+                style: r.heading1.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
               ),
-            ),
+              SizedBox(height: r.spacingXXL),
+              Padding(
+                padding: r.pad(horizontal: 24),
+                child: Text(
+                  'Comece a conversar comigo agora mesmo! Você pode me perguntar qualquer coisa.',
+                  style: r.bodyMedium.copyWith(
+                    color: Colors.white70,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              SizedBox(height: r.h(48, min: 40, max: 60)),
+              Container(
+                width: double.infinity,
+                margin: r.margin(horizontal: 24),
+                padding: r.pad(vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white, width: r.s(2)),
+                  borderRadius: BorderRadius.circular(r.radiusMD),
+                ),
+                child: Text(
+                  'Deslize para direita',
+                  style: r.bodyMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWhoAmIPage() {
+    return Builder(
+      builder: (context) {
+        final r = Responsive.of(context);
+        return Container(
+          key: const ValueKey('whoami'),
+          color: _primaryColor(context),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/logomednotes.png',
+                width: r.isz(80, min: 70, max: 100),
+                height: r.isz(80, min: 70, max: 100),
+                fit: BoxFit.contain,
+              ),
+              SizedBox(height: r.spacingXXXXL),
+              Text(
+                'Quem Sou Eu?',
+                style: r.heading1.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: r.spacingXXL),
+              Padding(
+                padding: r.pad(horizontal: 24),
+                child: Text(
+                  'Eu sou um Assistente de Inteligência\nArtificial (O Dr.Axon) treinado com\nMedicina Baseada em Evidências.',
+                  style: r.bodyMedium.copyWith(
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              SizedBox(height: r.h(48, min: 40, max: 60)),
+              Container(
+                width: double.infinity,
+                margin: r.margin(horizontal: 24),
+                padding: r.pad(vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white, width: r.s(2)),
+                  borderRadius: BorderRadius.circular(r.radiusMD),
+                ),
+                child: Text(
+                  'Deslize para direita',
+                  style: r.bodyMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWhatCanIAskPage() {
+    return Builder(
+      builder: (context) {
+        final r = Responsive.of(context);
+        return Container(
+          key: const ValueKey('whatcanask'),
+          color: _primaryColor(context),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/logomednotes.png',
+                width: r.isz(80, min: 70, max: 100),
+                height: r.isz(80, min: 70, max: 100),
+                fit: BoxFit.contain,
+              ),
+              SizedBox(height: r.spacingXXXXL),
+              Text(
+                'O que posso perguntar a você?',
+                style: r.heading1.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: r.spacingXXL),
+              Padding(
+                padding: r.pad(horizontal: 24),
+                child: Text(
+                  'Você pode tirar diversos tipos de dúvidas sobre casos clínicos, fluxogramas clínicos e até mesmo sobre funções do App Mednotes!',
+                  style: r.bodyMedium.copyWith(
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              SizedBox(height: r.h(48, min: 40, max: 60)),
+              GestureDetector(
+                onTap: () {
+                  final settings = Provider.of<SettingsService>(context, listen: false);
+                  Navigator.pushReplacement(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const ChatConversationScreen(),
+                      transitionDuration: settings.ecoModeEnabled
+                          ? Duration.zero
+                          : const Duration(milliseconds: 300),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        );
+                      },
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  margin: r.margin(horizontal: 24),
+                  padding: r.pad(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.creamCard,
+                    borderRadius: BorderRadius.circular(r.radiusMD),
+                  ),
+                  child: Text(
+                    'Vamos Começar',
+                    style: r.bodyMedium.copyWith(
+                        color: _primaryColor(context),
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildProgressIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(3, (index) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: _currentPage == index ? 24 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: _currentPage == index
-                ? AppColors.darkGreenHeader
-                : AppColors.darkGreenHeader.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(4),
-          ),
+    return Builder(
+      builder: (context) {
+        final r = Responsive.of(context);
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(3, (index) {
+            return Container(
+              margin: r.margin(horizontal: 4),
+              width: r.s(_currentPage == index ? 24 : 8, min: 6, max: 28),
+              height: r.s(8, min: 6, max: 10),
+              decoration: BoxDecoration(
+                color: _currentPage == index
+                    ? _primaryColor(context)
+                    : _primaryColor(context).withOpacity(0.3),
+                borderRadius: BorderRadius.circular(r.r(4)),
+              ),
+            );
+          }),
         );
-      }),
+      },
     );
   }
 
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Container(
-          height: 60,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Builder(
-                builder: (context) => GestureDetector(
-                  onTap: () {
-                    Scaffold.of(context).openDrawer();
-                  },
-                  child: const Icon(
-                    Icons.favorite_outline,
-                    color: AppColors.darkGreenHeader,
-                    size: 28,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () {},
-                child: Icon(Icons.book_outlined, color: AppColors.darkGreenHeader, size: 28),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const DashboardScreen()),
-                    (route) => false,
-                  );
-                },
-                child: Icon(Icons.home, color: AppColors.darkGreenHeader, size: 28),
-              ),
-              GestureDetector(
-                onTap: () {},
-                child: Icon(Icons.card_giftcard_outlined, color: AppColors.darkGreenHeader, size: 28),
-              ),
-              GestureDetector(
-                onTap: () {},
-                child: Icon(Icons.sports_esports_outlined, color: AppColors.darkGreenHeader, size: 28),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  Color _primaryColor(BuildContext context) {
+    final settings = Provider.of<SettingsService>(context, listen: false);
+    return settings.highContrast ? Colors.black : AppColors.darkGreenHeader;
   }
+
 }

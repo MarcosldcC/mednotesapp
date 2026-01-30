@@ -1,13 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
+import '../design/responsive.dart';
+import '../services/settings_service.dart';
+import 'view_account_screen.dart';
+import 'login_screen.dart';
+import 'progress_screen.dart';
+import 'privacy_policy_screen.dart';
+import 'help_center_screen.dart';
+import 'terms_of_use_screen.dart';
 
 class ProfileMenuScreen extends StatelessWidget {
   const ProfileMenuScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    final settings = Provider.of<SettingsService>(context);
+    final primaryColor = settings.highContrast ? Colors.black : AppColors.darkGreenHeader;
     final screenWidth = MediaQuery.of(context).size.width;
     final drawerWidth = screenWidth * 0.6;
 
@@ -19,27 +31,30 @@ class ProfileMenuScreen extends StatelessWidget {
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+              padding: r.pad(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
-                color: AppColors.creamCard,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
+                color: primaryColor,
               ),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.darkGreenHeader),
+                    icon: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: r.iconMD,
+                    ),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    constraints: BoxConstraints(
+                      minWidth: r.iconMD,
+                      minHeight: r.iconMD,
+                    ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: r.spacingSM),
                   Text(
                     'Voltar',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.darkGreenHeader,
+                    style: r.bodyMedium.copyWith(
+                      color: Colors.white,
                     ),
                   ),
                 ],
@@ -49,91 +64,228 @@ class ProfileMenuScreen extends StatelessWidget {
             // Conteúdo do menu
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: r.pad(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.spacingXXL),
                     
                     // Seção: Sua conta
                     _buildSectionTitle('Sua conta'),
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.spacingLG),
                     _buildMenuOption(
                       icon: Icons.person_outline,
-                      title: 'Editar Perfil',
-                      onTap: () {},
+                      title: 'Visualizar Conta',
+                      onTap: () {
+                        Navigator.pop(context); // Fechar o drawer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ViewAccountScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: r.spacingMD),
                     _buildMenuOption(
-                      icon: Icons.trending_up,
+                      icon: Icons.bar_chart_outlined,
                       title: 'Ver Progresso',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pop(context); // Fechar o drawer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ProgressScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXXXXL),
                     
                     // Seção: Notificações
                     _buildSectionTitle('Notificações'),
-                    const SizedBox(height: 16),
-                    _buildMenuOptionWithSwitch(
-                      icon: Icons.notifications_outlined,
-                      title: 'Alertas Epidemiológicos',
-                      value: true,
-                      onChanged: (value) {},
+                    SizedBox(height: r.spacingLG),
+                    Consumer<SettingsService>(
+                      builder: (context, settings, child) {
+                        return _buildMenuOptionWithSwitch(
+                          icon: Icons.notifications_outlined,
+                          title: 'Alertas Epidemiológicos',
+                          value: settings.epidemiologicalAlerts,
+                          onChanged: (value) {
+                            settings.setEpidemiologicalAlerts(value);
+                          },
+                        );
+                      },
                     ),
-                    const SizedBox(height: 12),
-                    _buildMenuOptionWithSwitch(
-                      icon: Icons.notifications_active_outlined,
-                      title: 'Notificações Push',
-                      value: true,
-                      onChanged: (value) {},
+                    SizedBox(height: r.spacingMD),
+                    Consumer<SettingsService>(
+                      builder: (context, settings, child) {
+                        return _buildMenuOptionWithSwitch(
+                          icon: Icons.notifications_active_outlined,
+                          title: 'Notificações Push',
+                          value: settings.pushNotifications,
+                          onChanged: (value) {
+                            settings.setPushNotifications(value);
+                          },
+                        );
+                      },
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXXXXL),
                     
                     // Seção: Acessibilidade
                     _buildSectionTitle('Acessibilidade'),
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.spacingLG),
                     _buildMenuOption(
                       icon: Icons.text_fields,
                       title: 'Tamanho do Texto',
-                      onTap: () {},
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (dialogContext) {
+                            final r = Responsive.of(dialogContext);
+                            return Consumer<SettingsService>(
+                              builder: (context, settings, child) {
+                                double tempScale = settings.textScale;
+                                return StatefulBuilder(
+                                  builder: (context, setState) {
+                                    return AlertDialog(
+                                      title: Text(
+                                        'Tamanho do Texto',
+                                        style: r.heading3.copyWith(
+                                          color: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'Ajuste o tamanho do texto',
+                                            style: r.bodyMedium.copyWith(
+                                              color: AppColors.grayText,
+                                            ),
+                                          ),
+                                          SizedBox(height: r.spacingLG),
+                                          Slider(
+                                            value: tempScale,
+                                            min: settings.minTextScale,
+                                            max: settings.maxTextScale,
+                                            divisions: 6,
+                                            label: tempScale.toStringAsFixed(1),
+                                            activeColor: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                tempScale = value;
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(dialogContext);
+                                          },
+                                          child: Text(
+                                            'Cancelar',
+                                            style: r.bodyMedium.copyWith(
+                                              color: AppColors.grayText,
+                                            ),
+                                          ),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            settings.setTextScale(tempScale);
+                                            Navigator.pop(dialogContext);
+                                          },
+                                          child: Text(
+                                            'Aplicar',
+                                            style: r.bodyMedium.copyWith(
+                                              color: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
                     ),
-                    const SizedBox(height: 12),
-                    _buildMenuOptionWithSwitch(
-                      icon: Icons.contrast,
-                      title: 'Alto Contraste',
-                      value: true,
-                      onChanged: (value) {},
+                    SizedBox(height: r.spacingMD),
+                    Consumer<SettingsService>(
+                      builder: (context, settings, child) {
+                        return _buildMenuOptionWithSwitch(
+                          icon: Icons.wb_sunny_outlined,
+                          title: 'Alto Contraste',
+                          value: settings.highContrast,
+                          onChanged: (value) {
+                            settings.setHighContrast(value);
+                          },
+                        );
+                      },
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingMD),
+                    Consumer<SettingsService>(
+                      builder: (context, settings, child) {
+                        return _buildMenuOptionWithSwitch(
+                          icon: Icons.eco_outlined,
+                          title: 'Modo Eco',
+                          value: settings.ecoModeEnabled,
+                          onChanged: (value) {
+                            settings.setEcoModeEnabled(value);
+                          },
+                        );
+                      },
+                    ),
+                    SizedBox(height: r.spacingXXXXL),
                     
                     // Seção: Suporte e Informações
                     _buildSectionTitle('Suporte e Informações'),
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.spacingLG),
                     _buildMenuOption(
                       icon: Icons.privacy_tip_outlined,
                       title: 'Política e Privacidade',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PrivacyPolicyScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: r.spacingMD),
                     _buildMenuOption(
                       icon: Icons.help_outline,
                       title: 'Central de Ajuda',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HelpCenterScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: r.spacingMD),
                     _buildMenuOption(
                       icon: Icons.description_outlined,
                       title: 'Termos de Uso',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TermsOfUseScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: 32),
-                    
-                    // Divisor
-                    Container(
-                      height: 1,
-                      color: AppColors.mediumGreen.withOpacity(0.3),
-                    ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.spacingXXXXL),
                     
                     // Sair da Conta
                     _buildMenuOption(
@@ -141,28 +293,93 @@ class ProfileMenuScreen extends StatelessWidget {
                       title: 'Sair da Conta',
                       isDestructive: true,
                       onTap: () {
-                        // Implementar lógica de logout
+                        // Capturar o contexto principal antes de abrir o diálogo
+                        final mainContext = context;
+                        
+                        // Mostrar diálogo de confirmação
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext dialogContext) {
+                            final r = Responsive.of(context);
+                            return AlertDialog(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(r.radiusLG),
+                              ),
+                              title: Text(
+                                'Sair da Conta',
+                                style: r.heading3.copyWith(
+                                  color: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+                                ),
+                              ),
+                              content: Text(
+                                'Tem certeza que deseja sair da sua conta?',
+                                style: r.bodyMedium.copyWith(
+                                  color: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(dialogContext);
+                                  },
+                                  child: Text(
+                                    'Cancelar',
+                                    style: r.bodyMedium.copyWith(
+                                      color: AppColors.grayText,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    // Fechar o diálogo
+                                    Navigator.pop(dialogContext);
+                                    // Fechar o drawer
+                                    Navigator.pop(mainContext);
+                                    
+                                    // Aguardar um pouco para garantir que os dialogs foram fechados
+                                    await Future.delayed(const Duration(milliseconds: 150));
+                                    
+                                    // Fazer logout: limpar stack e ir para login
+                                    if (mainContext.mounted) {
+                                      Navigator.of(mainContext, rootNavigator: true).pushAndRemoveUntil(
+                                        MaterialPageRoute(
+                                          builder: (context) => const LoginScreen(),
+                                        ),
+                                        (route) => false, // Remove todas as rotas anteriores
+                                      );
+                                    }
+                                  },
+                                  child: Text(
+                                    'Sair',
+                                    style: r.bodyMedium.copyWith(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
                       },
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXXXXL),
                     
                     // Copyright
                     Center(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        padding: r.pad(horizontal: 8),
                         child: Text(
                           '© 2026 MedNotes. Todos os direitos reservados',
-                          style: AppTextStyles.bodySmall?.copyWith(
+                          style: r.bodySmall.copyWith(
                             color: AppColors.grayText,
-                          ) ?? AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.grayText,
-                            fontSize: 12,
                           ),
                           textAlign: TextAlign.center,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.spacingXXL),
                   ],
                 ),
               ),
@@ -174,12 +391,18 @@ class ProfileMenuScreen extends StatelessWidget {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: AppTextStyles.heading3.copyWith(
-        color: AppColors.darkGreenHeader,
-        fontWeight: FontWeight.bold,
-      ),
+    return Builder(
+      builder: (context) {
+        final r = Responsive.of(context);
+        final settings = Provider.of<SettingsService>(context);
+        return Text(
+          title,
+          style: r.heading3.copyWith(
+            color: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+            fontWeight: FontWeight.bold,
+          ),
+        );
+      },
     );
   }
 
@@ -189,49 +412,75 @@ class ProfileMenuScreen extends StatelessWidget {
     required VoidCallback onTap,
     bool isDestructive = false,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.mediumGreen.withOpacity(0.3),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: isDestructive
-                  ? Colors.red
-                  : AppColors.darkGreenHeader,
-              size: 20,
+    return Builder(
+      builder: (context) {
+        final r = Responsive.of(context);
+        final settings = Provider.of<SettingsService>(context);
+        return InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(r.radiusMD),
+          child: Container(
+            padding: r.pad(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(r.radiusMD),
+              border: Border.all(
+                color: AppColors.mediumGreen.withOpacity(0.3),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(
+                    settings.ecoModeEnabled ? 0.03 : 0.06,
+                  ),
+                  blurRadius: r.s(
+                    settings.ecoModeEnabled ? 6 : 8,
+                    min: 5,
+                    max: 10,
+                  ),
+                  offset: Offset(
+                    0,
+                    r.s(
+                      settings.ecoModeEnabled ? 2 : 3,
+                      min: 2,
+                      max: 5,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: AppTextStyles.bodyMedium.copyWith(
+            child: Row(
+              children: [
+                Icon(
+                  icon,
                   color: isDestructive
                       ? Colors.red
-                      : AppColors.darkGreenHeader,
-                  fontWeight: isDestructive ? FontWeight.bold : FontWeight.normal,
+                      : (settings.highContrast ? Colors.black : AppColors.darkGreenHeader),
+                  size: r.iconSM,
                 ),
-                overflow: TextOverflow.ellipsis,
-              ),
+                SizedBox(width: r.spacingMD),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: r.bodyMedium.copyWith(
+                      color: isDestructive
+                          ? Colors.red
+                          : (settings.highContrast ? Colors.black : AppColors.darkGreenHeader),
+                      fontWeight: isDestructive ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (!isDestructive)
+                  Icon(
+                    Icons.chevron_right,
+                    color: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+                    size: r.iconSM,
+                  ),
+              ],
             ),
-            if (!isDestructive)
-              Icon(
-                Icons.chevron_right,
-                color: AppColors.darkGreenHeader,
-                size: 20,
-              ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -241,40 +490,69 @@ class ProfileMenuScreen extends StatelessWidget {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.mediumGreen.withOpacity(0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: AppColors.darkGreenHeader,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.darkGreenHeader,
-              ),
-              overflow: TextOverflow.ellipsis,
+    return Builder(
+      builder: (context) {
+        final r = Responsive.of(context);
+        final settings = Provider.of<SettingsService>(context);
+        return Container(
+          padding: r.pad(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(r.radiusMD),
+            border: Border.all(
+              color: AppColors.mediumGreen.withOpacity(0.3),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(
+                  settings.ecoModeEnabled ? 0.03 : 0.06,
+                ),
+                blurRadius: r.s(
+                  settings.ecoModeEnabled ? 6 : 8,
+                  min: 5,
+                  max: 10,
+                ),
+                offset: Offset(
+                  0,
+                  r.s(
+                    settings.ecoModeEnabled ? 2 : 3,
+                    min: 2,
+                    max: 5,
+                  ),
+                ),
+              ),
+            ],
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: AppColors.darkGreenHeader,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+                size: r.iconSM,
+              ),
+              SizedBox(width: r.spacingMD),
+              Expanded(
+                child: Text(
+                  title,
+                  style: r.bodyMedium.copyWith(
+                    color: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Transform.scale(
+                scale: 0.9,
+                child: Switch(
+                  value: value,
+                  onChanged: onChanged,
+                  activeColor: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -1,10 +1,12 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
 import '../widgets/custom_clipper.dart';
-import '../screens/register_screen.dart';
+import '../design/responsive.dart';
+import '../screens/login_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -35,10 +37,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+      SystemUiOverlayStyle(
+        statusBarColor: AppColors.darkGreenHeader,
+        statusBarIconBrightness: Brightness.light, // Ícones brancos para fundo verde
       ),
     );
 
@@ -54,38 +58,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
             ),
             child: CustomPaint(
               painter: DiagonalPatternPainter(),
-              child: Stack(
-                children: [
-                  // Imagem da médica - responsiva com tamanho legal
-                  Positioned(
-                    bottom: MediaQuery.of(context).size.height * 0.35, // Parte inferior da médica no topo do card (35% é a nova altura do card)
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: SizedBox(
-                        width: math.min(math.max(MediaQuery.of(context).size.width * 0.65, 300.0), 450.0), // 65% da largura, min 300px, max 450px
-                        child: Image.asset(
-                          'assets/images/medica.png',
-                          fit: BoxFit.contain, // Mostra a imagem completa sem cortar
-                          alignment: Alignment.bottomCenter, // Alinha pela parte inferior
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                              ),
-                              child: const Icon(
-                                Icons.person,
-                                size: 200,
-                                color: Colors.white70,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              child: const SizedBox.expand(),
             ),
           ),
           
@@ -120,7 +93,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const RegisterScreen(),
+                        builder: (context) => const LoginScreen(),
                       ),
                     );
                   });
@@ -131,95 +104,34 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                   });
                 }
               },
-              child: ClipPath(
-                clipper: WaveClipper(),
-                child: Container(
-                  height: MediaQuery.of(context).size.height * 0.35, // Card ocupa 35% da altura da tela
-                  decoration: BoxDecoration(
-                    color: AppColors.creamBackground,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                      const SizedBox(height: 16),
-                      // Linha separadora
-                      Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppColors.darkGreenHeader,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      // Título "Seja bem-vindo ao"
-                      Text(
-                        'Seja bem-vindo ao',
-                        style: AppTextStyles.heading1.copyWith(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      // Título "MedNotes"
-                      Text(
-                        'MedNotes',
-                        style: AppTextStyles.heading1.copyWith(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      // Texto descritivo
-                      Text(
-                        'Protocolos clínicos baseados em evidências, organizados para decisões rápidas, seguras e confiáveis.',
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: AppColors.grayText,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 32),
-                      // Botão "Vamos Começar"
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const RegisterScreen(),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.darkGreenButton,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildMedicaImage(r),
+                  ClipPath(
+                    clipper: WaveClipper(),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.creamBackground,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: r.s(8),
+                            offset: Offset(0, -r.s(2)),
                           ),
-                          child: Text(
-                            'Vamos Começar',
-                            style: AppTextStyles.button,
-                          ),
-                        ),
+                        ],
                       ),
-                      const SizedBox(height: 8), // Espaço menor após o botão
-                      ],
+                      child: Padding(
+                        padding: r.pad(
+                          horizontal: 24,
+                          top: r.spacingLG,
+                          bottom: r.spacingLG,
+                        ),
+                        child: _buildWelcomeContent(context, r),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -227,6 +139,116 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
       ),
     );
   }
+}
+
+Widget _buildWelcomeContent(BuildContext context, Responsive r) {
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      SizedBox(height: r.spacingLG),
+      // Linha separadora
+      Center(
+        child: Container(
+          width: r.h(40, min: 32, max: 48),
+          height: r.s(4, min: 3, max: 5),
+          decoration: BoxDecoration(
+            color: AppColors.darkGreenHeader,
+            borderRadius: BorderRadius.circular(r.r(2)),
+          ),
+        ),
+      ),
+      SizedBox(height: r.spacingXL),
+      // Título "Seja bem-vindo ao"
+      Text(
+        'Seja bem-vindo ao',
+        style: GoogleFonts.montserrat(
+          textStyle: r.heading2,
+          color: AppColors.darkGreenHeader,
+          fontWeight: FontWeight.w800,
+        ),
+        textAlign: TextAlign.center,
+      ),
+      // Título "MedNotes"
+      Text(
+        'MedNotes',
+        style: GoogleFonts.montserrat(
+          textStyle: r.heading1,
+          color: AppColors.darkGreenHeader,
+          fontWeight: FontWeight.w800,
+        ),
+        textAlign: TextAlign.center,
+      ),
+      SizedBox(height: r.spacingLG),
+      // Texto descritivo
+      Text(
+        'Protocolos clínicos baseados em evidências, organizados para decisões rápidas, seguras e confiáveis.',
+        style: r.bodyLarge.copyWith(
+          color: AppColors.grayText,
+        ),
+        textAlign: TextAlign.center,
+      ),
+      SizedBox(height: r.spacingXXXXL),
+      // Botão "Vamos Começar"
+      SizedBox(
+        width: double.infinity,
+        height: r.buttonHeight,
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const LoginScreen(),
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.darkGreenButton,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(r.radiusLG),
+            ),
+            elevation: r.s(2, min: 1, max: 4),
+            shadowColor: Colors.black.withOpacity(0.12),
+          ),
+          child: Text(
+            'Vamos Começar',
+            style: r.bodyMedium.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+      SizedBox(height: r.spacingXS),
+    ],
+  );
+}
+
+Widget _buildMedicaImage(Responsive r) {
+  return Center(
+    child: SizedBox(
+      width: math.min(
+        r.width * 0.5,
+        r.h(320, min: 200, max: 360),
+      ),
+      child: Image.asset(
+        'assets/images/medica.png',
+        fit: BoxFit.contain,
+        alignment: Alignment.bottomCenter,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+            ),
+            child: Icon(
+              Icons.person,
+              size: r.h(160, min: 110, max: 200),
+              color: Colors.white70,
+            ),
+          );
+        },
+      ),
+    ),
+  );
 }
 
 class DiagonalPatternPainter extends CustomPainter {

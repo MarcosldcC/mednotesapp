@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
+import '../constants/app_constants.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
 import '../screens/profile_menu_screen.dart';
 import '../screens/chat_screen.dart';
 import '../screens/notifications_screen.dart';
+import '../screens/real_time_health_screen.dart';
+import '../screens/marketplace_screen.dart';
+import '../screens/progress_screen.dart';
+import '../screens/eco_mode_screen.dart';
+import '../screens/on_call_mode_screen.dart';
+import '../screens/clinical_algorithms_screen.dart';
+import '../screens/algorithm_detail_screen.dart';
+import '../services/settings_service.dart';
+import '../providers/user_career_provider.dart';
+import '../providers/recent_protocols_provider.dart';
+import '../utils/theme_helper.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_bottom_navigation_bar.dart';
+import '../widgets/chat_floating_button.dart';
+import '../widgets/glass_card.dart';
+import '../design/responsive.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -26,56 +45,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    final settings = Provider.of<SettingsService>(context);
+    
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+      SystemUiOverlayStyle(
+        statusBarColor: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+        statusBarIconBrightness: Brightness.light, // Ícones brancos para fundo verde
       ),
     );
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: AppColors.creamCard,
+      backgroundColor: ThemeHelper.getBackgroundColor(context),
       drawer: const ProfileMenuScreen(),
       drawerEnableOpenDragGesture: true,
       body: SafeArea(
         child: Column(
           children: [
             // Header com avatar, logo e notificação
-            _buildHeader(),
+            const AppHeader(),
             
             // Conteúdo principal
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: r.pad(horizontal: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.spacingXXL),
                     
                     // Seção: Seu Nível de Performance
                     _buildPerformanceSection(),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXXXXL),
                     
                     // Seção: Olá Paola!
                     _buildGreetingSection(),
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.spacingXXL),
                     
                     // Barra de busca
                     _buildSearchBar(),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXXXXL),
                     
                     // Seção: Ações Rápidas
                     _buildQuickActionsSection(),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXXXXL),
                     
                     // Seção: Modo Eco Ativo
                     _buildEcoModeSection(),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXXXXL),
                     
                     // Seção: Protocolos Recentes
                     _buildRecentProtocolsSection(),
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.spacingXXL),
                   ],
                 ),
               ),
@@ -83,185 +105,160 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
-      floatingActionButton: _buildChatFloatingButton(),
+      bottomNavigationBar: AppBottomNavigationBar(
+        currentIndex: _currentIndex,
+        onItemTap: (index) {
+          // Apenas atualiza o índice para índices que não têm navegação padrão
+          // (índices 0 e 1). Os índices 2, 3 e 4 são tratados pelo componente.
+          if (index != 2 && index != 3 && index != 4) {
+            setState(() {
+              _currentIndex = index;
+            });
+          }
+        },
+      ),
+      floatingActionButton: const ChatFloatingButton(),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.darkGreenHeader,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: Row(
-        children: [
-          // Avatar clicável
-          Builder(
-            builder: (context) => GestureDetector(
-              onTap: () {
-                Scaffold.of(context).openDrawer();
-              },
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.white,
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/images/medica.png',
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          // Logo mednotes
-          Expanded(
-            child: Text(
-              'mednotes',
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          // Ícone de notificação
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 28),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationsScreen(),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildPerformanceSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Seu Nível de Performance',
-          style: AppTextStyles.heading2.copyWith(
-            color: AppColors.darkGreenHeader,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Acompanhe seu progresso no MedNotes',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.grayText,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-          decoration: BoxDecoration(
-            color: AppColors.darkGreenHeader,
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(16),
-              bottomRight: Radius.circular(16),
+    final r = Responsive.of(context);
+
+    return Consumer<SettingsService>(
+      builder: (context, settings, child) {
+        final textColor = settings.highContrast ? Colors.black : AppColors.darkGreenHeader;
+        final subtitleColor = settings.highContrast ? Colors.black : AppColors.grayText;
+        final ecoMode = settings.ecoModeEnabled;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Seu Nível de Performance',
+              style: r.heading2.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: _buildMetricItem(Icons.star_outline, 'EXPERIÊNCIA', '590'),
-                    ),
-                    Container(
-                      width: 1,
-                      height: 70,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                    Expanded(
-                      child: _buildMetricItem(Icons.public, 'RANK MUNDIAL', '#1,438'),
-                    ),
-                    Container(
-                      width: 1,
-                      height: 70,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                    Expanded(
-                      child: _buildMetricItem(Icons.location_on, 'RANK LOCAL', '#56'),
-                    ),
-                  ],
-                ),
+            SizedBox(height: r.spacingSM),
+            Text(
+              'Acompanhe seu progresso no MedNotes',
+              style: r.bodyMedium.copyWith(
+                color: subtitleColor,
               ),
-              Container(
-                height: 1,
-                width: double.infinity,
-                color: Colors.white.withOpacity(0.3),
-              ),
-              const SizedBox(height: 4),
-              Center(
-                child: TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            SizedBox(height: r.spacingLG),
+            Consumer<UserCareerProvider>(
+              builder: (context, career, child) {
+                final cardColor = settings.highContrast ? Colors.black : AppColors.darkGreenHeader;
+                final tierLabel = career.currentLevel.displayName;
+                final pointsStr = '${career.pointsInTier}/100';
+                final rankStr = career.rankInTier != null ? '#${career.rankInTier}' : '—';
+                return Container(
+                  padding: r.pad(left: 20, right: 20, top: 20, bottom: 12),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(r.radiusLG),
+                    border: settings.highContrast
+                        ? Border.all(color: Colors.white, width: r.s(2))
+                        : null,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(ecoMode ? 0.06 : 0.12),
+                        blurRadius: r.s(ecoMode ? 8 : 12, min: 8, max: 16),
+                        offset: Offset(0, r.s(ecoMode ? 3 : 6, min: 3, max: 8)),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    'Ver Mais',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.white,
-                    ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: r.pad(bottom: 20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Expanded(
+                              child: _buildMetricItem(Icons.workspace_premium, 'TIER', tierLabel),
+                            ),
+                            Container(
+                              width: r.s(1),
+                              height: r.h(70, min: 60, max: 80),
+                              color: Colors.white.withOpacity(0.3),
+                            ),
+                            Expanded(
+                              child: _buildMetricItem(Icons.star_outline, 'PONTOS', pointsStr),
+                            ),
+                            Container(
+                              width: r.s(1),
+                              height: r.h(70, min: 60, max: 80),
+                              color: Colors.white.withOpacity(0.3),
+                            ),
+                            Expanded(
+                              child: _buildMetricItem(Icons.leaderboard, 'RANKING', rankStr),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        height: r.s(1),
+                        width: double.infinity,
+                        color: Colors.white.withOpacity(0.3),
+                      ),
+                      SizedBox(height: r.spacingXS),
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ProgressScreen(),
+                              ),
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            padding: r.pad(horizontal: 8, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Ver Mais',
+                            style: r.bodyMedium.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildMetricItem(IconData icon, String label, String value) {
+    final r = Responsive.of(context);
+    
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: Colors.white, size: 24),
-        const SizedBox(height: 6),
+        Icon(icon, color: Colors.white, size: r.iconMD),
+        SizedBox(height: r.spacingSM),
         Text(
           label,
-          style: AppTextStyles.bodySmall?.copyWith(
+          style: r.bodySmall.copyWith(
             color: Colors.white70,
-          ) ?? AppTextStyles.bodyMedium.copyWith(
-            color: Colors.white70,
-            fontSize: 12,
           ),
         ),
-        const SizedBox(height: 2),
+        SizedBox(height: r.spacingXS),
         Text(
           value,
-          style: AppTextStyles.heading3.copyWith(
+          style: r.heading3.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -271,359 +268,489 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildGreetingSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Olá Paola!',
-          style: AppTextStyles.heading2.copyWith(
-            color: AppColors.darkGreenHeader,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'O que você precisa hoje?',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.grayText,
-          ),
-        ),
-      ],
+    final r = Responsive.of(context);
+    
+    return Consumer<SettingsService>(
+      builder: (context, settings, child) {
+        final textColor = settings.highContrast ? Colors.black : AppColors.darkGreenHeader;
+        final subtitleColor = settings.highContrast ? Colors.black : AppColors.grayText;
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Olá ${AppConstants.kDisplayName}!',
+              style: r.heading2.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: r.spacingSM),
+            Text(
+              'O que você precisa hoje?',
+              style: r.bodyMedium.copyWith(
+                color: subtitleColor,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildSearchBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.darkGreenHeader,
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.search, color: AppColors.grayText),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Buscar sintoma, doença ou protocolo...',
-                hintStyle: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.grayText,
+    final r = Responsive.of(context);
+    
+    return Consumer<SettingsService>(
+      builder: (context, settings, child) {
+        return GlassCard(
+          useGlass: !settings.highContrast,
+          padding: r.pad(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Icon(Icons.search, color: AppColors.grayText, size: r.iconMD),
+              SizedBox(width: r.spacingMD),
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar sintoma, doença ou protocolo...',
+                    hintStyle: r.bodyMedium.copyWith(
+                      color: AppColors.grayText,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  style: r.bodyMedium.copyWith(
+                    color: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+                  ),
+                  onChanged: (value) {
+                    // Aqui você pode implementar a lógica de busca
+                    // Por exemplo, filtrar resultados baseado no valor digitado
+                  },
+                  onSubmitted: (value) {
+                    // Aqui você pode implementar a ação quando o usuário pressionar Enter
+                    // Por exemplo, navegar para uma tela de resultados de busca
+                  },
                 ),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
               ),
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.darkGreenHeader,
-              ),
-              onChanged: (value) {
-                // Aqui você pode implementar a lógica de busca
-                // Por exemplo, filtrar resultados baseado no valor digitado
-              },
-              onSubmitted: (value) {
-                // Aqui você pode implementar a ação quando o usuário pressionar Enter
-                // Por exemplo, navegar para uma tela de resultados de busca
-              },
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildQuickActionsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Ações Rápidas',
-          style: AppTextStyles.heading2.copyWith(
-            color: AppColors.darkGreenHeader,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
+    final r = Responsive.of(context);
+    
+    return Consumer<SettingsService>(
+      builder: (context, settings, child) {
+        final textColor = settings.highContrast ? Colors.black : AppColors.darkGreenHeader;
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Ações Rápidas',
+              style: r.heading2.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+        SizedBox(height: r.spacingLG),
         Row(
           children: [
             Expanded(
-              child: _buildQuickActionCard(
-                icon: Icons.description,
-                title: 'Algoritmos',
-                subtitle: 'Fluxogramas clínicos',
-                isHighlighted: false,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ClinicalAlgorithmsScreen(),
+                    ),
+                  );
+                },
+                child: _buildQuickActionCard(
+                  imagePath: 'assets/images/Vector.svg',
+                  title: 'Algoritmos',
+                  subtitle: 'Fluxogramas clínicos',
+                  isHighlighted: false,
+                ),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: r.spacingMD),
             Expanded(
-              child: _buildQuickActionCard(
-                icon: Icons.flash_on,
-                title: 'Modo Plantão',
-                subtitle: 'Decisões Rápidas',
-                isHighlighted: true,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const OnCallModeScreen(),
+                    ),
+                  );
+                },
+                child: _buildQuickActionCard(
+                  imagePath: 'assets/images/Vector-1.svg',
+                  title: 'Modo Plantão',
+                  subtitle: 'Decisões Rápidas',
+                  isHighlighted: true,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: r.spacingMD),
         IntrinsicHeight(
           child: Row(
             children: [
               Expanded(
                 flex: 1,
-                child: _buildQuickActionCard(
-                  icon: Icons.settings,
-                  title: 'Casos Clínicos',
-                  subtitle: 'Pratique Agora',
-                  isHighlighted: false,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MarketplaceScreen(),
+                      ),
+                    );
+                  },
+                  child: _buildQuickActionCard(
+                    imagePath: 'assets/images/Vector-2.svg',
+                    title: 'Marketplace',
+                    subtitle: 'Produtos e serviços',
+                    isHighlighted: false,
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: r.spacingMD),
               Expanded(
                 flex: 1,
-                child: _buildQuickActionCard(
-                  icon: Icons.favorite,
-                  title: 'Saúde em Tempo Real',
-                  subtitle: 'Dados epidemiológicos',
-                  isHighlighted: false,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RealTimeHealthScreen(),
+                      ),
+                    );
+                  },
+                  child: _buildQuickActionCard(
+                    imagePath: 'assets/images/Vector-3.svg',
+                    title: 'Saúde em Tempo Real',
+                    subtitle: 'Dados epidemiológicos',
+                    isHighlighted: false,
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ],
+    );
+      },
     );
   }
 
   Widget _buildQuickActionCard({
-    required IconData icon,
+    required String imagePath,
     required String title,
     required String subtitle,
     required bool isHighlighted,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isHighlighted ? AppColors.darkGreenHeader : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.darkGreenHeader,
-          width: isHighlighted ? 0 : 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          Icon(
-            icon,
-            color: isHighlighted ? Colors.white : AppColors.darkGreenHeader,
-            size: 32,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: AppTextStyles.bodyLarge.copyWith(
-              color: isHighlighted ? Colors.white : AppColors.darkGreenHeader,
-              fontWeight: FontWeight.bold,
+    return Consumer<SettingsService>(
+      builder: (context, settings, child) {
+        final r = Responsive.of(context);
+        final ecoMode = settings.ecoModeEnabled;
+        final useGlass = !settings.highContrast && !isHighlighted;
+        final cardColor = settings.highContrast
+            ? (isHighlighted ? Colors.black : Colors.white)
+            : (isHighlighted ? AppColors.darkGreenHeader : Colors.white);
+        final borderColor = settings.highContrast
+            ? Colors.black
+            : AppColors.darkGreenHeader;
+
+        final content = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            SizedBox(
+              width: r.iconXL,
+              height: r.iconXL,
+              child: SvgPicture.asset(
+                imagePath,
+                fit: BoxFit.contain,
+                colorFilter: ColorFilter.mode(
+                  settings.highContrast
+                      ? (isHighlighted ? Colors.white : Colors.black)
+                      : (isHighlighted ? Colors.white : AppColors.darkGreenHeader),
+                  BlendMode.srcIn,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: AppTextStyles.bodySmall?.copyWith(
-              color: isHighlighted ? Colors.white70 : AppColors.grayText,
-            ) ?? AppTextStyles.bodyMedium.copyWith(
-              color: isHighlighted ? Colors.white70 : AppColors.grayText,
-              fontSize: 12,
+            SizedBox(height: r.spacingMD),
+            Text(
+              title,
+              style: r.bodyLarge.copyWith(
+                color: settings.highContrast
+                    ? (isHighlighted ? Colors.white : Colors.black)
+                    : (isHighlighted ? Colors.white : AppColors.darkGreenHeader),
+                fontWeight: FontWeight.bold,
+              ),
             ),
+            SizedBox(height: r.spacingXS),
+            Text(
+              subtitle,
+              style: r.bodySmall.copyWith(
+                color: settings.highContrast
+                    ? (isHighlighted ? Colors.white70 : Colors.black)
+                    : (isHighlighted ? Colors.white70 : AppColors.grayText),
+              ),
+            ),
+          ],
+        );
+
+        if (useGlass) {
+          return GlassCard(
+            useGlass: true,
+            padding: r.pad(all: 16),
+            child: content,
+          );
+        }
+
+        return Container(
+          padding: r.pad(all: 16),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(r.radiusMD),
+            border: Border.all(
+              color: borderColor,
+              width: settings.highContrast ? 2 : (isHighlighted ? 0 : 1),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(ecoMode ? 0.04 : (isHighlighted ? 0.14 : 0.08)),
+                blurRadius: r.s(ecoMode ? 7 : 10, min: 6, max: 14),
+                offset: Offset(0, r.s(ecoMode ? 2 : 4, min: 2, max: 6)),
+              ),
+            ],
           ),
-        ],
-      ),
+          child: content,
+        );
+      },
     );
   }
 
   Widget _buildEcoModeSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.darkGreenHeader,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.eco, color: Colors.white, size: 32),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final r = Responsive.of(context);
+    
+    return Consumer<SettingsService>(
+      builder: (context, settings, child) {
+        final cardColor = settings.highContrast ? Colors.black : AppColors.darkGreenHeader;
+        final isLargeText = MediaQuery.textScaleFactorOf(context) > 1.3;
+        final ecoMode = settings.ecoModeEnabled;
+        return Container(
+          padding: r.pad(all: 16),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(r.radiusMD),
+            border: settings.highContrast 
+                ? Border.all(color: Colors.white, width: r.s(2))
+                : null,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(ecoMode ? 0.06 : 0.12),
+                blurRadius: r.s(ecoMode ? 8 : 12, min: 8, max: 16),
+                offset: Offset(0, r.s(ecoMode ? 3 : 6, min: 3, max: 8)),
+              ),
+            ],
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(r.radiusMD),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EcoModeScreen(),
+                ),
+              );
+            },
+            child: Row(
               children: [
-                Text(
-                  'Modo Eco Ativo',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                Icon(Icons.eco, color: Colors.white, size: r.iconXL),
+                SizedBox(width: r.spacingLG),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        settings.ecoModeEnabled
+                            ? 'Modo Eco Ativo'
+                            : 'Conheça o Modo Eco',
+                        style: r.bodyLarge.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: r.spacingXS),
+                      Text(
+                        settings.ecoModeEnabled
+                            ? 'Economizando energia e dados.'
+                            : 'Veja como o MedNotes reduz o impacto.',
+                        style: r.bodySmall.copyWith(
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Este aplicativo é sustentável!',
-                  style: AppTextStyles.bodySmall?.copyWith(
-                    color: Colors.white70,
-                  ) ?? AppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EcoModeScreen(),
+                      ),
+                    );
+                  },
+                  child: isLargeText
+                      ? Icon(
+                          Icons.visibility,
+                          color: Colors.white,
+                          size: r.iconSM,
+                        )
+                      : Text(
+                          'Ver mais >',
+                          style: r.bodyMedium.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ],
             ),
           ),
-          TextButton(
-            onPressed: () {},
-            child: Text(
-              'Ver mais >',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildRecentProtocolsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final r = Responsive.of(context);
+
+    return Consumer2<SettingsService, RecentProtocolsProvider>(
+      builder: (context, settings, recent, child) {
+        final textColor = settings.highContrast ? Colors.black : AppColors.darkGreenHeader;
+        final subtitleColor = settings.highContrast ? Colors.black : AppColors.grayText;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Protocolos Recentes',
-              style: AppTextStyles.heading2.copyWith(
-                color: AppColors.darkGreenHeader,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Ver',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.darkGreenHeader,
+                Expanded(
+                  child: Text(
+                    'Protocolos Recentes',
+                    style: r.heading2.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 4),
-                Icon(Icons.swipe, color: AppColors.darkGreenHeader, size: 20),
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Ver',
+                        style: r.bodyMedium.copyWith(
+                          color: settings.highContrast ? Colors.black : AppColors.darkGreenHeader,
+                        ),
+                      ),
+                      SizedBox(width: r.spacingXS),
+                      Icon(Icons.swipe, color: settings.highContrast ? Colors.black : AppColors.darkGreenHeader, size: r.iconSM),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // Lista de protocolos recentes (placeholder)
-        Container(
-          height: 100,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.mediumGreen),
-          ),
-          child: Center(
-            child: Text(
-              'Nenhum protocolo recente',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.grayText,
+            SizedBox(height: r.spacingLG),
+            if (recent.titles.isEmpty)
+              GlassCard(
+                useGlass: !settings.highContrast,
+                padding: EdgeInsets.zero,
+                child: Container(
+                  height: r.h(100, min: 80, max: 120),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Nenhum protocolo recente',
+                    style: r.bodyMedium.copyWith(color: subtitleColor),
+                  ),
+                ),
+              )
+            else
+              GlassCard(
+                useGlass: !settings.highContrast,
+                padding: r.pad(all: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: recent.titles.take(5).toList().asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final title = entry.value;
+                    final isLast = index == (recent.titles.length > 5 ? 4 : recent.titles.length - 1);
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: isLast ? 0 : r.spacingMD),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AlgorithmDetailScreen(
+                                algorithmTitle: title,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.description_outlined,
+                              color: AppColors.darkGreenHeader,
+                              size: r.iconSM,
+                            ),
+                            SizedBox(width: r.spacingSM),
+                            Expanded(
+                              child: Text(
+                                title,
+                                style: r.bodyMedium.copyWith(color: textColor),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              color: subtitleColor,
+                              size: r.iconSM,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.darkGreenHeader,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-      ),
-      child: SafeArea(
-        child: Container(
-          height: 60,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavAvatar(),
-              _buildNavItem(Icons.book_outlined, 1),
-              _buildNavItem(Icons.home, 2),
-              _buildNavItem(Icons.card_giftcard_outlined, 3),
-              _buildNavItem(Icons.sports_esports_outlined, 4),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavAvatar() {
-    return Builder(
-      builder: (context) => GestureDetector(
-        onTap: () {
-          Scaffold.of(context).openDrawer();
-        },
-        child: const Icon(
-          Icons.favorite_outline,
-          color: Colors.white70,
-          size: 28,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, int index) {
-    final isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _currentIndex = index;
-        });
-        // Removido acesso ao chat pela navbar
-      },
-      child: Icon(
-        icon,
-        color: isSelected ? Colors.white : Colors.white70,
-        size: 28,
-      ),
-    );
-  }
-
-  Widget _buildChatFloatingButton() {
-    return FloatingActionButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ChatScreen(),
-          ),
+          ],
         );
       },
-      backgroundColor: AppColors.darkGreenHeader,
-      child: const Icon(
-        Icons.chat_bubble_outline,
-        color: Colors.white,
-        size: 28,
-      ),
     );
   }
+
+
 }

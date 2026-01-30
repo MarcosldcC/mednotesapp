@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
+import '../design/responsive.dart';
+import '../widgets/glass_card.dart';
 import '../screens/profile_menu_screen.dart';
 import '../screens/dashboard_screen.dart';
 
@@ -17,10 +20,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+      SystemUiOverlayStyle(
+        statusBarColor: AppColors.darkGreenHeader,
+        statusBarIconBrightness: Brightness.light, // Ícones brancos para fundo verde
       ),
     );
 
@@ -38,21 +43,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             // Conteúdo principal
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: r.pad(horizontal: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.spacingXXL),
                     
                     // Título
                     Text(
                       'Notificações',
-                      style: AppTextStyles.heading2.copyWith(
+                      style: r.heading2.copyWith(
                         color: AppColors.darkGreenHeader,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.spacingXXL),
                     
                     // Lista de notificações (placeholder)
                     _buildNotificationItem(
@@ -61,21 +66,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       time: 'Agora',
                       isRead: false,
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: r.spacingMD),
                     _buildNotificationItem(
                       title: 'Novo protocolo disponível',
                       message: 'Um novo protocolo clínico foi adicionado à plataforma.',
                       time: 'Há 2 horas',
                       isRead: true,
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: r.spacingMD),
                     _buildNotificationItem(
                       title: 'Atualização do sistema',
                       message: 'Nova versão do aplicativo disponível para download.',
                       time: 'Ontem',
                       isRead: true,
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.spacingXXL),
                   ],
                 ),
               ),
@@ -88,47 +93,56 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.darkGreenHeader,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: Row(
-        children: [
-          // Botão voltar
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          const SizedBox(width: 8),
-          // Logo mednotes
-          Expanded(
-            child: Text(
-              'mednotes',
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+    return Builder(
+      builder: (context) {
+        final r = Responsive.of(context);
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.darkGreenHeader,
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(r.r(30, min: 24, max: 35)),
+              bottomRight: Radius.circular(r.r(30, min: 24, max: 35)),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: r.s(4),
+                offset: Offset(0, r.s(2)),
+              ),
+            ],
           ),
-          // Espaço para alinhar
-          const SizedBox(width: 48),
-        ],
-      ),
+          padding: r.pad(horizontal: 24, vertical: 16),
+          child: Row(
+            children: [
+              // Botão voltar
+              IconButton(
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: r.iconMD,
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+              SizedBox(width: r.spacingSM),
+              // Logo mednotes
+              Expanded(
+                child: Text(
+                  'mednotes',
+                  style: r.bodyLarge.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              // Espaço para alinhar
+              SizedBox(width: r.h(48, min: 40, max: 56)),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -138,136 +152,135 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     required String time,
     required bool isRead,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.darkGreenHeader,
-          width: 1,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Indicador de não lida
-          if (!isRead)
-            Container(
-              width: 8,
-              height: 8,
-              margin: const EdgeInsets.only(top: 6, right: 12),
-              decoration: BoxDecoration(
-                color: AppColors.darkGreenHeader,
-                shape: BoxShape.circle,
-              ),
-            )
-          else
-            const SizedBox(width: 20),
-          // Conteúdo
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTextStyles.bodyLarge.copyWith(
+    return Builder(
+      builder: (context) {
+        final r = Responsive.of(context);
+        return GlassCard(
+          padding: r.pad(all: 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Indicador de não lida
+              if (!isRead)
+                Container(
+                  width: r.s(8, min: 6, max: 10),
+                  height: r.s(8, min: 6, max: 10),
+                  margin: r.margin(top: 6, right: 12),
+                  decoration: BoxDecoration(
                     color: AppColors.darkGreenHeader,
-                    fontWeight: FontWeight.bold,
+                    shape: BoxShape.circle,
                   ),
+                )
+              else
+                SizedBox(width: r.s(20, min: 16, max: 24)),
+              // Conteúdo
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: r.bodyLarge.copyWith(
+                        color: AppColors.darkGreenHeader,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: r.spacingXS),
+                    Text(
+                      message,
+                      style: r.bodyMedium.copyWith(
+                        color: AppColors.grayText,
+                      ),
+                    ),
+                    SizedBox(height: r.spacingSM),
+                    Text(
+                      time,
+                      style: r.bodySmall.copyWith(
+                        color: AppColors.grayText,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  message,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.grayText,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  time,
-                  style: AppTextStyles.bodySmall?.copyWith(
-                    color: AppColors.grayText,
-                  ) ?? AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.grayText,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildBottomNavigationBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Container(
-          height: 60,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavAvatar(),
-              _buildNavItem(Icons.book_outlined, 1),
-              _buildNavItem(Icons.home, 2),
-              _buildNavItem(Icons.card_giftcard_outlined, 3),
-              _buildNavItem(Icons.sports_esports_outlined, 4),
+    return Builder(
+      builder: (context) {
+        final r = Responsive.of(context);
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(r.r(30, min: 24, max: 35)),
+              topRight: Radius.circular(r.r(30, min: 24, max: 35)),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: r.s(4),
+                offset: Offset(0, -r.s(2)),
+              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavAvatar() {
-    return Builder(
-      builder: (context) => GestureDetector(
-        onTap: () {
-          Scaffold.of(context).openDrawer();
-        },
-        child: const Icon(
-          Icons.favorite_outline,
-          color: Colors.white70,
-          size: 28,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, int index) {
-    return GestureDetector(
-      onTap: () {
-        if (index == 2) {
-          // Navegar para dashboard quando clicar no home
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const DashboardScreen()),
-            (route) => false,
-          );
-        }
+          child: SafeArea(
+            child: Container(
+              height: r.bottomNavHeight,
+              padding: r.pad(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem('assets/images/Vector.svg', 0), // Livro - Algoritmo
+                  _buildNavItem('assets/images/Vector-1.svg', 1), // Raio - Modo Plantão
+                  _buildNavItem('assets/images/Icon.svg', 2), // Casa - Home
+                  _buildNavItem('assets/images/Vector-2.svg', 3), // Sacola - Marketplace
+                  _buildNavItem('assets/images/Vector-3.svg', 4), // Coração - Saúde em tempo real
+                ],
+              ),
+            ),
+          ),
+        );
       },
-      child: Icon(
-        icon,
-        color: AppColors.darkGreenHeader,
-        size: 28,
-      ),
+    );
+  }
+
+  Widget _buildNavItem(String imagePath, int index) {
+    final isHome = index == 2;
+    return Builder(
+      builder: (context) {
+        final r = Responsive.of(context);
+        return GestureDetector(
+          onTap: () {
+            if (isHome) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const DashboardScreen()),
+                (route) => false,
+              );
+            }
+          },
+          child: Container(
+            padding: r.pad(all: 8),
+            child: SizedBox(
+              width: r.iconMD,
+              height: r.iconMD,
+              child: SvgPicture.asset(
+                imagePath,
+                fit: BoxFit.contain,
+                colorFilter: ColorFilter.mode(
+                  AppColors.darkGreenHeader,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

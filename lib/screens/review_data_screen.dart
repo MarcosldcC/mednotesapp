@@ -1,7 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
+import '../design/responsive.dart';
 import '../widgets/custom_clipper.dart';
 import '../screens/payment_success_screen.dart';
 
@@ -9,12 +11,20 @@ class ReviewDataScreen extends StatefulWidget {
   final String cardNumber;
   final String cardName;
   final String expiryDate;
+  /// Ex.: "Premium Mensal" ou "Premium Anual"
+  final String planLabel;
+  /// Ex.: "R\$ 39,90" ou "R\$ 383,04"
+  final String amount;
+  final bool isAnnual;
 
   const ReviewDataScreen({
     super.key,
     required this.cardNumber,
     required this.cardName,
     required this.expiryDate,
+    this.planLabel = 'Premium Mensal',
+    this.amount = 'R\$ 39,90',
+    this.isAnnual = false,
   });
 
   @override
@@ -29,10 +39,12 @@ class _ReviewDataScreenState extends State<ReviewDataScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+      SystemUiOverlayStyle(
+        statusBarColor: AppColors.darkGreenHeader,
+        statusBarIconBrightness: Brightness.light, // Ícones brancos para fundo verde
       ),
     );
 
@@ -52,25 +64,35 @@ class _ReviewDataScreenState extends State<ReviewDataScreen> {
                 decoration: const BoxDecoration(
                   color: AppColors.darkGreenHeader,
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Premium Mensal',
-                      style: AppTextStyles.heading2.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                child: Center(
+                  child: Container(
+                    padding: r.pad(horizontal: 24, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(r.radiusMD),
+                      border: Border.all(color: Colors.white24),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'R\$39.90',
-                      style: AppTextStyles.heading1.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.planLabel,
+                          style: r.heading2.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: r.spacingSM),
+                        Text(
+                          widget.amount,
+                          style: r.heading1.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -81,74 +103,91 @@ class _ReviewDataScreenState extends State<ReviewDataScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: Container(
-              width: double.infinity,
-              height: _calculateCardHeight(context),
-              decoration: BoxDecoration(
-                color: AppColors.creamCard,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(45),
-                  topRight: Radius.circular(45),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
+            child: ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(r.radiusXXL),
+                topRight: Radius.circular(r.radiusXXL),
               ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Container(
+                width: double.infinity,
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height * 0.65,
+                  maxHeight: MediaQuery.of(context).size.height * 0.95,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.creamCard,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(r.radiusXXL),
+                    topRight: Radius.circular(r.radiusXXL),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: r.s(8, min: 6, max: 10),
+                      offset: Offset(0, -r.s(2, min: 1, max: 3)),
+                    ),
+                  ],
+                ),
+                child: SingleChildScrollView(
+                padding: r.pad(horizontal: 24, vertical: r.spacingLG),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.spacingMD),
                     // Linha separadora
                     Center(
                       child: Container(
-                        width: 40,
-                        height: 4,
+                        width: r.isz(40, min: 35, max: 45),
+                        height: r.s(4, min: 3, max: 5),
                         decoration: BoxDecoration(
                           color: AppColors.darkGreenHeader,
-                          borderRadius: BorderRadius.circular(2),
+                          borderRadius: BorderRadius.circular(r.r(2)),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.spacingLG),
                     // Header com botão voltar e título
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back),
+                          icon: Icon(
+                            Icons.arrow_back,
+                            size: r.iconMD,
+                          ),
                           color: AppColors.darkGreenHeader,
                           onPressed: () => Navigator.pop(context),
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(
+                            minWidth: r.iconMD,
+                            minHeight: r.iconMD,
+                          ),
                         ),
                         Expanded(
                           child: Text(
                             'Revisar Dados',
-                            style: AppTextStyles.heading2.copyWith(
+                            style: r.heading2.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                             textAlign: TextAlign.center,
                           ),
                         ),
-                        const SizedBox(width: 48), // Balance do botão voltar
+                        SizedBox(width: r.isz(48, min: 40, max: 56)), // Balance do botão voltar
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.spacingLG),
                     
                     // Informações de vigência
                     RichText(
                       text: TextSpan(
-                        style: AppTextStyles.bodyMedium.copyWith(
+                        style: r.bodyMedium.copyWith(
                           color: AppColors.grayText,
                         ),
                         children: [
                           const TextSpan(text: 'Vigência do Plano: '),
                           TextSpan(
                             text: 'Mensal',
-                            style: TextStyle(
+                            style: r.bodyMedium.copyWith(
                               color: AppColors.darkGreenHeader,
                               fontWeight: FontWeight.bold,
                             ),
@@ -156,7 +195,7 @@ class _ReviewDataScreenState extends State<ReviewDataScreen> {
                           const TextSpan(text: ' Vencimento: '),
                           TextSpan(
                             text: '25',
-                            style: TextStyle(
+                            style: r.bodyMedium.copyWith(
                               color: AppColors.darkGreenHeader,
                               fontWeight: FontWeight.bold,
                             ),
@@ -164,21 +203,21 @@ class _ReviewDataScreenState extends State<ReviewDataScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.spacingLG),
                     
                     // Visualização do cartão
-                    _buildCardVisual(),
-                    const SizedBox(height: 32),
+                    _buildCardVisual(r),
+                    SizedBox(height: r.spacingXL),
                     
                     // Título Benefícios
                     Text(
                       'Benefícios do Plano:',
-                      style: AppTextStyles.heading3.copyWith(
+                      style: r.heading3.copyWith(
                         color: AppColors.darkGreenHeader,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.spacingMD),
                     
                     // Lista de benefícios em duas colunas
                     Row(
@@ -188,59 +227,64 @@ class _ReviewDataScreenState extends State<ReviewDataScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildBenefit('Personalização inteligente de perfil'),
-                              _buildBenefit('Análises personalizadas de condutas e estudos'),
-                              _buildBenefit('Casos clínicos ilimitados'),
-                              _buildBenefit('Recomendações e trilhas adaptadas por IA'),
-                              _buildBenefit('Acesso completo ao Marketplace'),
+                              _buildBenefit('Personalização inteligente de perfil', r),
+                              _buildBenefit('Análises personalizadas de condutas e estudos', r),
+                              _buildBenefit('Casos clínicos ilimitados', r),
+                              _buildBenefit('Recomendações e trilhas adaptadas por IA', r),
+                              _buildBenefit('Acesso completo ao Marketplace', r),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        SizedBox(width: r.spacingMD),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildBenefit('Gamificação avançada'),
-                              _buildBenefit('Chat com IA clínica'),
-                              _buildBenefit('Modo Plantão ilimitado'),
-                              _buildBenefit('Modo offline'),
+                              _buildBenefit('Gamificação avançada', r),
+                              _buildBenefit('Chat com IA clínica', r),
+                              _buildBenefit('Modo Plantão ilimitado', r),
+                              _buildBenefit('Modo offline', r),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXL),
                     
                     // Botão Próximo
                     SizedBox(
-                      height: 56,
+                      height: r.h(56, min: 50, max: 64),
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const PaymentSuccessScreen(),
+                              builder: (context) => PaymentSuccessScreen(
+                                planLabel: widget.planLabel,
+                                amount: widget.amount,
+                                isAnnual: widget.isAnnual,
+                              ),
                             ),
                           );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.darkGreenHeader,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(r.radiusMD),
                           ),
                           elevation: 0,
                         ),
                         child: Text(
-                          'Próximo',
-                          style: AppTextStyles.button,
+                          'Confirmar pagamento',
+                          style: r.button,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.spacingXL),
                   ],
                 ),
               ),
+            ),
             ),
           ),
         ],
@@ -270,13 +314,27 @@ class _ReviewDataScreenState extends State<ReviewDataScreen> {
     return date.padRight(4, '0');
   }
 
-  Widget _buildCardVisual() {
+  Widget _buildCardVisual(Responsive r) {
     return Container(
-      height: 200,
-      padding: const EdgeInsets.all(20),
+      height: r.h(200, min: 180, max: 220),
+      padding: r.pad(all: 20),
       decoration: BoxDecoration(
-        color: AppColors.darkGreenHeader,
-        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.darkGreenHeader,
+            Color(0xFF1A554C),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(r.radiusLG),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,13 +342,20 @@ class _ReviewDataScreenState extends State<ReviewDataScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const SizedBox(width: 40),
               Container(
-                width: 50,
-                height: 40,
+                width: r.isz(48, min: 40, max: 56),
+                height: r.h(36, min: 30, max: 42),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD4C5A9),
+                  borderRadius: BorderRadius.circular(r.radiusSM),
+                ),
+              ),
+              Container(
+                width: r.isz(50, min: 40, max: 60),
+                height: r.h(40, min: 30, max: 50),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(r.radiusXS),
                 ),
               ),
             ],
@@ -298,32 +363,30 @@ class _ReviewDataScreenState extends State<ReviewDataScreen> {
           const Spacer(),
           Text(
             _formatCardNumber(widget.cardNumber),
-            style: const TextStyle(
+            style: r.heading2.copyWith(
               color: Colors.white,
-              fontSize: 24,
               fontWeight: FontWeight.bold,
               letterSpacing: 2,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: r.spacingLG),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Nome',
-                    style: TextStyle(
+                    style: r.bodySmall.copyWith(
                       color: Colors.white70,
-                      fontSize: 12,
                     ),
                   ),
                   Text(
                     widget.cardName.isEmpty ? 'Nome Sob.' : widget.cardName,
-                    style: const TextStyle(
+                    style: r.bodyMedium.copyWith(
                       color: Colors.white,
-                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -332,27 +395,25 @@ class _ReviewDataScreenState extends State<ReviewDataScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Data',
-                    style: TextStyle(
+                    style: r.bodySmall.copyWith(
                       color: Colors.white70,
-                      fontSize: 12,
                     ),
                   ),
                   Text(
                     _formatExpiryDate(widget.expiryDate),
-                    style: const TextStyle(
+                    style: r.bodyMedium.copyWith(
                       color: Colors.white,
-                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              const Icon(
+              Icon(
                 Icons.credit_card,
                 color: Colors.white,
-                size: 32,
+                size: r.iconLG,
               ),
             ],
           ),
@@ -361,30 +422,30 @@ class _ReviewDataScreenState extends State<ReviewDataScreen> {
     );
   }
 
-  Widget _buildBenefit(String text) {
+  Widget _buildBenefit(String text, Responsive r) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: r.spacingMD),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 20,
-            height: 20,
+            width: r.isz(20, min: 18, max: 22),
+            height: r.isz(20, min: 18, max: 22),
             decoration: BoxDecoration(
               color: AppColors.darkGreenHeader,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.arrow_forward,
+            child: Icon(
+              Icons.check,
               color: Colors.white,
-              size: 12,
+              size: r.isz(12, min: 10, max: 14),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: r.spacingSM),
           Expanded(
             child: Text(
               text,
-              style: AppTextStyles.bodyMedium.copyWith(
+              style: r.bodyMedium.copyWith(
                 color: AppColors.grayText,
               ),
             ),

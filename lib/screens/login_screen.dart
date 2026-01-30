@@ -1,11 +1,14 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
 import '../widgets/custom_clipper.dart';
 import 'register_screen.dart';
-import 'choose_plan_screen.dart';
+import 'dashboard_screen.dart';
+import '../design/responsive.dart';
+import '../services/settings_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,10 +32,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    final settings = Provider.of<SettingsService>(context);
+    
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+      SystemUiOverlayStyle(
+        statusBarColor: AppColors.darkGreenHeader,
+        statusBarIconBrightness: Brightness.light, // Ícones brancos para fundo verde
       ),
     );
 
@@ -46,38 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
             decoration: BoxDecoration(
               color: AppColors.darkGreenHeader,
             ),
-            child: Stack(
-              children: [
-                // Imagem da médica - responsiva com tamanho legal
-                Positioned(
-                  bottom: MediaQuery.of(context).size.height * 0.45, // Parte inferior da médica no topo do card (45% é a nova altura do card)
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: SizedBox(
-                      width: math.min(math.max(MediaQuery.of(context).size.width * 0.65, 300.0), 450.0), // 65% da largura, min 300px, max 450px
-                      child: Image.asset(
-                        'assets/images/medica.png',
-                        fit: BoxFit.contain, // Mostra a imagem completa sem cortar
-                        alignment: Alignment.bottomCenter, // Alinha pela parte inferior
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                            ),
-                            child: const Icon(
-                              Icons.person,
-                              size: 200,
-                              color: Colors.white70,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            child: const SizedBox.expand(),
           ),
           
           // Card bege fixado na parte inferior (sobrepondo a médica)
@@ -85,56 +60,67 @@ class _LoginScreenState extends State<LoginScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: ClipPath(
-              clipper: WaveClipper(),
-              child: Container(
-                height: MediaQuery.of(context).size.height * 0.45, // Card menor (45% em vez de 52%)
-                decoration: BoxDecoration(
-                  color: AppColors.creamForm,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, -2),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildMedicaImage(r),
+                ClipPath(
+                  clipper: WaveClipper(),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.creamForm,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: r.s(8),
+                          offset: Offset(0, -r.s(2)),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 16),
-                        // Linha separadora
-                        Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: AppColors.darkGreenHeader,
-                              borderRadius: BorderRadius.circular(2),
+                    child: SingleChildScrollView(
+                      padding: r.pad(horizontal: 24, vertical: r.spacingLG),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SizedBox(height: r.spacingLG),
+                            // Linha separadora
+                            Center(
+                              child: Container(
+                                width: r.h(40, min: 32, max: 48),
+                                height: r.s(4, min: 3, max: 5),
+                                decoration: BoxDecoration(
+                                  color: AppColors.darkGreenHeader,
+                                  borderRadius: BorderRadius.circular(r.r(2)),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        // Título
-                        Text(
-                          'Entre na sua conta',
-                          style: AppTextStyles.heading2.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 20),
+                            SizedBox(height: r.spacingXL),
+                            // Título
+                            Text(
+                              'Entre na sua conta',
+                              style: r.heading2.copyWith(
+                                color: settings.highContrast
+                                    ? Colors.black
+                                    : AppColors.darkGreenHeader,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.2,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: r.spacingXL),
                         
                         // Campo E-mail
                         Text(
                           'E-mail',
-                          style: AppTextStyles.label,
+                          style: r.bodyMedium.copyWith(
+                            color: AppColors.darkGreenHeader,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: r.spacingSM),
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
@@ -143,30 +129,27 @@ class _LoginScreenState extends State<LoginScreen> {
                             filled: true,
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
+                              borderRadius: BorderRadius.circular(r.radiusMD),
+                              borderSide: BorderSide(
                                 color: AppColors.darkGreenHeader,
-                                width: 1,
+                                width: r.s(1),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
+                              borderRadius: BorderRadius.circular(r.radiusMD),
+                              borderSide: BorderSide(
                                 color: AppColors.darkGreenHeader,
-                                width: 1,
+                                width: r.s(1),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
+                              borderRadius: BorderRadius.circular(r.radiusMD),
+                              borderSide: BorderSide(
                                 color: AppColors.darkGreenHeader,
-                                width: 2,
+                                width: r.s(2),
                               ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
+                            contentPadding: r.pad(horizontal: 16, vertical: 16),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -178,14 +161,17 @@ class _LoginScreenState extends State<LoginScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: r.spacingLG),
                         
                         // Campo Senha
                         Text(
                           'Senha',
-                          style: AppTextStyles.label,
+                          style: r.bodyMedium.copyWith(
+                            color: AppColors.darkGreenHeader,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: r.spacingSM),
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
@@ -194,36 +180,34 @@ class _LoginScreenState extends State<LoginScreen> {
                             filled: true,
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
+                              borderRadius: BorderRadius.circular(r.radiusMD),
+                              borderSide: BorderSide(
                                 color: AppColors.darkGreenHeader,
-                                width: 1,
+                                width: r.s(1),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
+                              borderRadius: BorderRadius.circular(r.radiusMD),
+                              borderSide: BorderSide(
                                 color: AppColors.darkGreenHeader,
-                                width: 1,
+                                width: r.s(1),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
+                              borderRadius: BorderRadius.circular(r.radiusMD),
+                              borderSide: BorderSide(
                                 color: AppColors.darkGreenHeader,
-                                width: 2,
+                                width: r.s(2),
                               ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
+                            contentPadding: r.pad(horizontal: 16, vertical: 16),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscurePassword
                                     ? Icons.visibility_outlined
                                     : Icons.visibility_off_outlined,
                                 color: AppColors.darkGreenHeader,
+                                size: r.iconMD,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -239,19 +223,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: r.spacingXXL),
                         
                         // Botão Entrar
                         SizedBox(
-                          height: 48,
+                          height: r.buttonHeight,
                           child: ElevatedButton(
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
-                                // Como não há servidor, todo login vai para tela de planos
+                                // Navega diretamente para o dashboard
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const ChoosePlanScreen(),
+                                    builder: (context) => const DashboardScreen(),
                                   ),
                                 );
                               }
@@ -259,57 +243,95 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.darkGreenHeader,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(r.radiusLG),
                               ),
-                              elevation: 0,
+                              elevation: r.s(2, min: 1, max: 4),
+                              shadowColor: Colors.black.withOpacity(0.12),
                             ),
                             child: Text(
                               'Entrar',
-                              style: AppTextStyles.button,
+                              style: r.bodyMedium.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: r.spacingXXL),
                         
                         // Link para criar conta
                         Center(
-                          child: RichText(
-                            text: TextSpan(
-                              style: AppTextStyles.secondaryText,
-                              children: [
-                                const TextSpan(text: 'ou '),
-                                WidgetSpan(
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => const RegisterScreen(),
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      'crie uma conta',
-                                      style: AppTextStyles.link,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const RegisterScreen(),
+                                ),
+                              );
+                            },
+                            child: RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                style: r.bodyMedium.copyWith(
+                                  color: AppColors.darkGreenHeader,
+                                ),
+                                children: [
+                                  const TextSpan(text: 'ou '),
+                                  TextSpan(
+                                    text: 'Crie uma Conta',
+                                    style: r.bodyLarge.copyWith(
+                                      color: AppColors.darkGreenHeader,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8), // Espaço menor após o link
+                        SizedBox(height: r.spacingSM), // Espaço menor após o link
                       ],
                     ),
                   ),
                 ),
               ),
             ),
+            ],
           ),
+        ),
         ],
       ),
     );
   }
+}
+
+Widget _buildMedicaImage(Responsive r) {
+  return Center(
+    child: SizedBox(
+      width: math.min(
+        r.width * 0.5,
+        r.h(350, min: 250, max: 380),
+      ),
+      child: Image.asset(
+        'assets/images/medica.png',
+        fit: BoxFit.contain,
+        alignment: Alignment.bottomCenter,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+            ),
+            child: Icon(
+              Icons.person,
+              size: r.h(180, min: 120, max: 220),
+              color: Colors.white70,
+            ),
+          );
+        },
+      ),
+    ),
+  );
 }
 
 class DecorativePatternPainter extends CustomPainter {
