@@ -17,7 +17,7 @@ import 'on_call_mode_screen.dart';
 import 'marketplace_screen.dart';
 import 'real_time_health_screen.dart';
 import 'profile_menu_screen.dart';
-import 'on_call_simulation_completed_screen.dart';
+import 'simulation_case_completed_screen.dart';
 
 /// Tela de medidas não medicamentosas na simulação
 class SimulationNonPharmacologicalScreen extends StatefulWidget {
@@ -246,15 +246,23 @@ class _SimulationNonPharmacologicalScreenState
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
+                            final simState = Provider.of<SimulationStateProvider>(
+                              context,
+                              listen: false,
+                            );
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const OnCallSimulationCompletedScreen(
-                                  pointsAwarded: 10,
+                                builder: (context) => SimulationCaseCompletedScreen(
+                                  patientName: widget.patientName,
+                                  patientAge: widget.patientAge,
+                                  pointsAwarded: 15,
+                                  elapsedSeconds: simState.elapsedSeconds,
+                                  success: true,
                                 ),
                               ),
                             );
+                            simState.completeSimulation();
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.darkGreenHeader,
